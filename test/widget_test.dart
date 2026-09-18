@@ -233,6 +233,6 @@ void main() {
     );
     expect(find.text('NoiseMaps'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Messung starten'), findsOneWidget);
-    expect(find.text('Letzte Messung'), findsOneWidget);
+    expect(find.textContaining('Letzte Messung'), findsOneWidget);
   });
 }

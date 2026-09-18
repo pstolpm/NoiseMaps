@@ -4,6 +4,7 @@ import '../core/theme/app_theme.dart';
 import '../models/noise_category.dart';
 import '../models/noise_measurement.dart';
 import '../repositories/measurement_repository.dart';
+import '../services/ai_classification_service.dart';
 
 /// Ergebnisansicht: Pegel prominent, AI-Klasse + Confidence, Position,
 /// optionale Nutzerkorrektur, Speichern / Verwerfen.
@@ -12,10 +13,14 @@ class ResultScreen extends StatefulWidget {
     super.key,
     required this.measurement,
     required this.repository,
+    this.aiDetails,
   });
 
   final NoiseMeasurement measurement;
   final MeasurementRepository repository;
+
+  /// Optionale Modell-Details (Top-Originalklassen) – nur zur Anzeige.
+  final AiClassification? aiDetails;
 
   @override
   State<ResultScreen> createState() => _ResultScreenState();
@@ -75,6 +80,42 @@ class _ResultScreenState extends State<ResultScreen> {
             subtitle: 'Confidence ${(m.aiConfidence * 100).round()} %'
                 '${lowConfidence ? ' – niedrig, Ergebnis unsicher' : ''}',
           ),
+          if (widget.aiDetails != null && widget.aiDetails!.topRaw.isNotEmpty)
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('KI-Details (Originalklassen)'),
+              childrenPadding: const EdgeInsets.only(bottom: 8),
+              children: [
+                for (final (label, score) in widget.aiDetails!.topRaw)
+                  Row(
+                    children: [
+                      Expanded(child: Text(label, style: theme.textTheme.bodySmall)),
+                      SizedBox(
+                        width: 100,
+                        child: LinearProgressIndicator(
+                          value: score.clamp(0, 1),
+                          minHeight: 6,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 36,
+                        child: Text('${(score * 100).round()} %',
+                            textAlign: TextAlign.end,
+                            style: theme.textTheme.bodySmall),
+                      ),
+                    ],
+                  ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Text(
+                    'Gemittelt über die gesamte Aufnahme · wird nicht gespeichert',
+                    style: theme.textTheme.labelSmall,
+                  ),
+                ),
+              ],
+            ),
           _InfoTile(
             icon: Icons.location_on,
             title:

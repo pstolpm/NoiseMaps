@@ -16,6 +16,7 @@ class AiClassification {
     this.rawTopLabel,
     this.rawTopScore,
     this.categoryScores = const {},
+    this.topRaw = const [],
   });
 
   final NoiseCategory category;
@@ -29,6 +30,9 @@ class AiClassification {
 
   /// Score je Zielklasse (ohne "uncertain").
   final Map<NoiseCategory, double> categoryScores;
+
+  /// Die besten Originalklassen des Modells (Label, Score) – für Transparenz.
+  final List<(String, double)> topRaw;
 }
 
 /// Austauschbare AI-Schnittstelle (Project Brain, Abschnitt 16.9).
@@ -197,12 +201,13 @@ class YamnetAiClassificationService implements AiClassificationService {
 
     final confidence = bestScore.clamp(0.0, 1.0);
 
+    final order = List<int>.generate(numClasses, (i) => i)
+      ..sort((a, b) => avg[b].compareTo(avg[a]));
+    final topRaw = [for (final i in order.take(5)) (_labels[i], avg[i])];
+
     if (kDebugMode) {
-      final order = List<int>.generate(numClasses, (i) => i)
-        ..sort((a, b) => avg[b].compareTo(avg[a]));
-      final top = order
-          .take(5)
-          .map((i) => '${_labels[i]}=${avg[i].toStringAsFixed(2)}')
+      final top = topRaw
+          .map((e) => '${e.$1}=${e.$2.toStringAsFixed(2)}')
           .join(', ');
       final cats = catScores.entries
           .map((e) => '${e.key.key}=${e.value.toStringAsFixed(2)}')
@@ -219,6 +224,7 @@ class YamnetAiClassificationService implements AiClassificationService {
       rawTopLabel: _labels[topIdx],
       rawTopScore: avg[topIdx],
       categoryScores: catScores,
+      topRaw: topRaw,
     );
   }
 

@@ -174,6 +174,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         builder: (_) => ResultScreen(
           measurement: measurement,
           repository: widget.repository,
+          aiDetails: ai,
         ),
       ),
     );
