@@ -7,6 +7,7 @@ import '../services/location_service.dart';
 import '../widgets/measurement_card.dart';
 import 'map_screen.dart';
 import 'measurement_screen.dart';
+import 'statistics_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({
@@ -78,6 +79,19 @@ class HomeScreen extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.map),
                 label: const Text('Karte'),
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => StatisticsScreen(repository: repository),
+                  ),
+                ),
+                icon: const Icon(Icons.bar_chart),
+                label: const Text('Statistik'),
               ),
               const SizedBox(height: 24),
               Text('Letzte Messung', style: theme.textTheme.titleSmall),

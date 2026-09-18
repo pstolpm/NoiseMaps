@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:noise_maps/app.dart';
 import 'package:noise_maps/models/measurement_filter.dart';
+import 'package:noise_maps/models/measurement_stats.dart';
 import 'package:noise_maps/models/noise_category.dart';
 import 'package:noise_maps/models/noise_level_class.dart';
 import 'package:noise_maps/models/noise_measurement.dart';
@@ -197,6 +198,27 @@ void main() {
       expect(lines.length, items.length + 1);
       expect(lines.first.split(',').length, lines[1].split(',').length);
       expect(lines.first, startsWith('id,latitude,longitude'));
+    });
+  });
+
+  group('MeasurementStats', () {
+    test('leer', () {
+      final s = MeasurementStats.of(const []);
+      expect(s.isEmpty, isTrue);
+      expect(s.mostFrequentCategory, isNull);
+    });
+
+    test('Kennzahlen der Beispieldaten', () {
+      final items = MeasurementRepository.sampleMeasurements();
+      final s = MeasurementStats.of(items);
+      expect(s.count, 5);
+      expect(s.maxLevel, 82.7);
+      expect(s.minLevel, 46.3);
+      expect(s.meanLevel, closeTo((74.2 + 68.9 + 46.3 + 82.7 + 61.0) / 5, 0.001));
+      expect(s.medianLevel, 68.9);
+      expect(s.byCategory.values.fold<int>(0, (a, b) => a + b), 5);
+      expect(s.byHour.fold<int>(0, (a, b) => a + b), 5);
+      expect(s.uncertainShare, closeTo(0.2, 0.001));
     });
   });
 
