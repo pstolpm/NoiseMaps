@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../repositories/measurement_repository.dart';
+import '../services/audio_service.dart';
 import '../services/location_service.dart';
 import '../widgets/measurement_card.dart';
 import 'map_screen.dart';
@@ -11,10 +12,12 @@ class HomeScreen extends StatelessWidget {
     super.key,
     required this.repository,
     required this.locationService,
+    required this.audioService,
   });
 
   final MeasurementRepository repository;
   final LocationService locationService;
+  final AudioService audioService;
 
   @override
   Widget build(BuildContext context) {
@@ -49,6 +52,7 @@ class HomeScreen extends StatelessWidget {
                     builder: (_) => MeasurementScreen(
                       repository: repository,
                       locationService: locationService,
+                      audioService: audioService,
                     ),
                   ),
                 ),

@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -6,7 +8,9 @@ import 'package:noise_maps/models/noise_category.dart';
 import 'package:noise_maps/models/noise_level_class.dart';
 import 'package:noise_maps/models/noise_measurement.dart';
 import 'package:noise_maps/repositories/measurement_repository.dart';
+import 'package:noise_maps/services/audio_service.dart';
 import 'package:noise_maps/services/location_service.dart';
+import 'package:noise_maps/services/sound_level_service.dart';
 
 void main() {
   group('Modelle', () {
@@ -81,11 +85,59 @@ void main() {
     });
   });
 
+  group('Audio + Pegel (Fake)', () {
+    test('FakeAudioService liefert 4 s bei 16 kHz', () async {
+      final sample = await const FakeAudioService()
+          .recordSample(duration: const Duration(seconds: 4));
+      expect(sample.sampleRate, 16000);
+      expect(sample.samples.length, 64000);
+      expect(sample.duration.inSeconds, 4);
+    });
+
+    test('Pegel: Vollaussteuerung ≈ 0 dBFS, Stille = Floor', () {
+      const svc = SoundLevelService(calibrationOffsetDb: 90);
+      final full = AudioSample(
+        samples: Float32List.fromList(List.filled(1600, 1.0)),
+        sampleRate: 16000,
+      );
+      final r = svc.analyze(full);
+      expect(r.rmsDbfs, closeTo(0, 0.01));
+      expect(r.isClipping, isTrue);
+      expect(r.indicativeDb, closeTo(90, 0.01));
+
+      final silence = AudioSample(
+        samples: Float32List(1600),
+        sampleRate: 16000,
+      );
+      expect(svc.analyze(silence).rmsDbfs, -100);
+      expect(svc.analyze(silence).indicativeDb, 0);
+    });
+
+    test('Pegel: Sinus mit Amplitude 0.1 ≈ -23 dBFS', () async {
+      final sample = await const FakeAudioService(amplitude: 0.1)
+          .recordSample(duration: const Duration(seconds: 1));
+      final r = const SoundLevelService().analyze(sample);
+      // 0.8*0.1 Sinus → RMS ≈ 0.0566 → ≈ -25 dBFS, plus Rauschanteil
+      expect(r.rmsDbfs, closeTo(-24.5, 1.5));
+      expect(r.isClipping, isFalse);
+    });
+
+    test('AudioException hat deutsche Meldung', () {
+      const svc = FakeAudioService(failure: AudioFailure.permissionDenied);
+      expect(
+        () => svc.recordSample(duration: const Duration(seconds: 1)),
+        throwsA(isA<AudioException>()
+            .having((e) => e.message, 'message', contains('Mikrofon'))),
+      );
+    });
+  });
+
   testWidgets('Home zeigt Titel und Messbutton', (tester) async {
     await tester.pumpWidget(
       NoiseMapsApp(
         repository: InMemoryMeasurementRepository(),
         locationService: const FakeLocationService(),
+        audioService: const FakeAudioService(),
       ),
     );
     expect(find.text('NoiseMaps'), findsOneWidget);
