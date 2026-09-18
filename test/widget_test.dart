@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,6 +13,7 @@ import 'package:noise_maps/models/noise_measurement.dart';
 import 'package:noise_maps/repositories/measurement_repository.dart';
 import 'package:noise_maps/services/ai_classification_service.dart';
 import 'package:noise_maps/services/audio_service.dart';
+import 'package:noise_maps/services/export_service.dart';
 import 'package:noise_maps/services/location_service.dart';
 import 'package:noise_maps/services/sound_level_service.dart';
 
@@ -170,6 +173,30 @@ void main() {
       final now = DateTime.now();
       expect(f.apply(items, now: now), isNotEmpty); // die 5-Minuten-Messung
       expect(f.apply(items, now: now.add(const Duration(days: 2))), isEmpty);
+    });
+  });
+
+  group('ExportService', () {
+    final items = MeasurementRepository.sampleMeasurements();
+    const svc = ExportService();
+
+    test('GeoJSON ist gültige FeatureCollection mit lon/lat-Reihenfolge', () {
+      final fc = json.decode(svc.toGeoJson(items)) as Map<String, dynamic>;
+      expect(fc['type'], 'FeatureCollection');
+      final features = fc['features'] as List;
+      expect(features.length, items.length);
+      final first = features.first as Map<String, dynamic>;
+      final coords = (first['geometry'] as Map)['coordinates'] as List;
+      expect(coords[0], items.first.longitude);
+      expect(coords[1], items.first.latitude);
+      expect((first['properties'] as Map)['aiCategory'], items.first.aiCategory.key);
+    });
+
+    test('CSV hat Kopfzeile + eine Zeile je Messung', () {
+      final lines = const LineSplitter().convert(svc.toCsv(items));
+      expect(lines.length, items.length + 1);
+      expect(lines.first.split(',').length, lines[1].split(',').length);
+      expect(lines.first, startsWith('id,latitude,longitude'));
     });
   });
 

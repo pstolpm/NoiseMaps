@@ -10,6 +10,7 @@ import '../models/measurement_filter.dart';
 import '../models/noise_category.dart';
 import '../models/noise_measurement.dart';
 import '../repositories/measurement_repository.dart';
+import '../services/export_service.dart';
 import '../services/location_service.dart';
 import '../widgets/map_filter_sheet.dart';
 import '../widgets/measurement_card.dart';
@@ -37,6 +38,35 @@ class _MapScreenState extends State<MapScreen> {
   bool _locating = false;
   MeasurementFilter _filter = MeasurementFilter.none;
   bool _heatmap = false;
+  final _export = const ExportService();
+
+  Future<void> _onExport(String kind) async {
+    final items = _visible;
+    if (kind != 'png' && items.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Keine Messungen zum Exportieren.')),
+      );
+      return;
+    }
+    try {
+      switch (kind) {
+        case 'geojson':
+          await _export.shareGeoJson(items);
+        case 'csv':
+          await _export.shareCsv(items);
+        case 'png':
+          final c = _controller;
+          if (c == null) return;
+          final png = await c.takeSnapshot();
+          await _export.sharePng(png);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Export fehlgeschlagen: $e')));
+      }
+    }
+  }
 
   List<NoiseMeasurement> get _visible => _filter.apply(widget.repository.all);
 
@@ -272,6 +302,22 @@ class _MapScreenState extends State<MapScreen> {
             tooltip: _heatmap ? 'Punkte anzeigen' : 'Heatmap anzeigen',
             onPressed: () => _setHeatmap(!_heatmap),
             icon: Icon(_heatmap ? Icons.scatter_plot : Icons.blur_on),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Exportieren',
+            icon: const Icon(Icons.ios_share),
+            onSelected: _onExport,
+            itemBuilder: (_) => [
+              PopupMenuItem(
+                value: 'geojson',
+                child: Text('GeoJSON (${_visible.length} Messungen)'),
+              ),
+              PopupMenuItem(
+                value: 'csv',
+                child: Text('CSV (${_visible.length} Messungen)'),
+              ),
+              const PopupMenuItem(value: 'png', child: Text('Karte als Bild')),
+            ],
           ),
           IconButton(
             tooltip: 'Filter',
