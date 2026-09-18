@@ -17,4 +17,5 @@ class MapConstants {
 
   static const measurementsSource = 'measurements';
   static const measurementsLayer = 'measurements-circles';
+  static const heatmapLayer = 'measurements-heatmap';
 }

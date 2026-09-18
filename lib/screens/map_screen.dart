@@ -36,6 +36,7 @@ class _MapScreenState extends State<MapScreen> {
   bool _styleLoaded = false;
   bool _locating = false;
   MeasurementFilter _filter = MeasurementFilter.none;
+  bool _heatmap = false;
 
   List<NoiseMeasurement> get _visible => _filter.apply(widget.repository.all);
 
@@ -90,8 +91,67 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
 
+    // Heatmap: Gewicht nach Pegel (40 dB -> 0.1, 90 dB -> 1.0), unter den Punkten.
+    await c.addHeatmapLayer(
+      MapConstants.measurementsSource,
+      MapConstants.heatmapLayer,
+      HeatmapLayerProperties(
+        heatmapWeight: <dynamic>[
+          'interpolate',
+          <dynamic>['linear'],
+          <dynamic>['get', 'soundLevel'],
+          40, 0.1,
+          90, 1.0,
+        ],
+        heatmapIntensity: <dynamic>[
+          'interpolate',
+          <dynamic>['linear'],
+          <dynamic>['zoom'],
+          10, 1,
+          16, 3,
+        ],
+        heatmapRadius: <dynamic>[
+          'interpolate',
+          <dynamic>['linear'],
+          <dynamic>['zoom'],
+          10, 15,
+          16, 40,
+        ],
+        heatmapColor: <dynamic>[
+          'interpolate',
+          <dynamic>['linear'],
+          <dynamic>['heatmap-density'],
+          0, 'rgba(58,157,93,0)',
+          0.2, 'rgba(58,157,93,0.6)',
+          0.4, 'rgba(201,178,30,0.7)',
+          0.6, 'rgba(227,138,29,0.8)',
+          0.8, 'rgba(214,69,69,0.85)',
+          1, 'rgba(140,20,20,0.9)',
+        ],
+        heatmapOpacity: 0.8,
+      ),
+      belowLayerId: MapConstants.measurementsLayer,
+    );
+    await c.setLayerVisibility(MapConstants.heatmapLayer, _heatmap);
+    await c.setLayerVisibility(MapConstants.measurementsLayer, !_heatmap);
+
     c.onFeatureTapped.add(_onFeatureTapped);
     setState(() => _styleLoaded = true);
+  }
+
+  Future<void> _setHeatmap(bool on) async {
+    setState(() => _heatmap = on);
+    final c = _controller;
+    if (c == null || !_styleLoaded) return;
+    await c.setLayerVisibility(MapConstants.heatmapLayer, on);
+    await c.setLayerVisibility(MapConstants.measurementsLayer, !on);
+  }
+
+  Future<void> _zoomBy(double delta) async {
+    await _controller?.animateCamera(
+      CameraUpdate.zoomBy(delta),
+      duration: const Duration(milliseconds: 250),
+    );
   }
 
   Future<void> _pushData() async {
@@ -209,6 +269,11 @@ class _MapScreenState extends State<MapScreen> {
         title: const Text('Karte'),
         actions: [
           IconButton(
+            tooltip: _heatmap ? 'Punkte anzeigen' : 'Heatmap anzeigen',
+            onPressed: () => _setHeatmap(!_heatmap),
+            icon: Icon(_heatmap ? Icons.scatter_plot : Icons.blur_on),
+          ),
+          IconButton(
             tooltip: 'Filter',
             onPressed: _openFilter,
             icon: Badge(
@@ -245,7 +310,11 @@ class _MapScreenState extends State<MapScreen> {
             onStyleLoadedCallback: _onStyleLoaded,
             attributionButtonPosition: AttributionButtonPosition.bottomLeft,
           ),
-          const Positioned(top: 12, left: 12, child: NoiseLegend()),
+          Positioned(
+            top: 12,
+            left: 12,
+            child: _heatmap ? const _HeatmapLegend() : const NoiseLegend(),
+          ),
           Positioned(
             right: 12,
             bottom: 24,
@@ -265,7 +334,22 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  FloatingActionButton.small(
+                    heroTag: 'zoom-in',
+                    onPressed: () => _zoomBy(1),
+                    tooltip: 'Vergrößern',
+                    child: const Icon(Icons.add),
+                  ),
+                  const SizedBox(height: 4),
+                  FloatingActionButton.small(
+                    heroTag: 'zoom-out',
+                    onPressed: () => _zoomBy(-1),
+                    tooltip: 'Verkleinern',
+                    child: const Icon(Icons.remove),
+                  ),
+                  const SizedBox(height: 8),
                   FloatingActionButton(
+                    heroTag: 'locate',
                     onPressed: _goToMyLocation,
                     tooltip: 'Zu meinem Standort',
                     child: _locating
@@ -281,6 +365,54 @@ class _MapScreenState extends State<MapScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _HeatmapLegend extends StatelessWidget {
+  const _HeatmapLegend();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Lärmdichte (indikativ)', style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+            Container(
+              width: 120,
+              height: 10,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(5),
+                gradient: const LinearGradient(colors: [
+                  Color(0xFF3A9D5D),
+                  Color(0xFFC9B21E),
+                  Color(0xFFE38A1D),
+                  Color(0xFFD64545),
+                  Color(0xFF8C1414),
+                ]),
+              ),
+            ),
+            const SizedBox(height: 2),
+            SizedBox(
+              width: 120,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('leise', style: theme.textTheme.labelSmall),
+                  Text('laut / dicht', style: theme.textTheme.labelSmall),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
