@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:noise_maps/app.dart';
+import 'package:noise_maps/models/measurement_filter.dart';
 import 'package:noise_maps/models/noise_category.dart';
 import 'package:noise_maps/models/noise_level_class.dart';
 import 'package:noise_maps/models/noise_measurement.dart';
@@ -140,6 +141,35 @@ void main() {
       final r = await const MockAiClassificationService().classifyAudio(sample);
       expect(r.confidence, inInclusiveRange(0, 1));
       expect(r.category, isNot(NoiseCategory.uncertain));
+    });
+  });
+
+  group('MeasurementFilter', () {
+    final items = MeasurementRepository.sampleMeasurements();
+
+    test('leerer Filter lässt alles durch', () {
+      expect(MeasurementFilter.none.apply(items).length, items.length);
+      expect(MeasurementFilter.none.isActive, isFalse);
+    });
+
+    test('Kategorie-Filter', () {
+      final f = const MeasurementFilter(categories: {NoiseCategory.traffic});
+      final r = f.apply(items);
+      expect(r.map((m) => m.effectiveCategory).toSet(), {NoiseCategory.traffic});
+      expect(f.activeCount, 1);
+    });
+
+    test('Pegelklassen-Filter', () {
+      final f = const MeasurementFilter(levelClasses: {NoiseLevelClass.veryLoud});
+      expect(f.apply(items).every((m) => m.soundLevel >= 80), isTrue);
+      expect(f.apply(items), isNotEmpty);
+    });
+
+    test('Heute-Filter mit festem Bezugsdatum', () {
+      final f = const MeasurementFilter(timeRange: TimeRangeFilter.today);
+      final now = DateTime.now();
+      expect(f.apply(items, now: now), isNotEmpty); // die 5-Minuten-Messung
+      expect(f.apply(items, now: now.add(const Duration(days: 2))), isEmpty);
     });
   });
 

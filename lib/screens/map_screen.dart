@@ -6,10 +6,12 @@ import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../core/constants/map_constants.dart';
 import '../core/theme/app_theme.dart';
+import '../models/measurement_filter.dart';
 import '../models/noise_category.dart';
 import '../models/noise_measurement.dart';
 import '../repositories/measurement_repository.dart';
 import '../services/location_service.dart';
+import '../widgets/map_filter_sheet.dart';
 import '../widgets/measurement_card.dart';
 import '../widgets/noise_legend.dart';
 
@@ -33,6 +35,9 @@ class _MapScreenState extends State<MapScreen> {
   MapLibreMapController? _controller;
   bool _styleLoaded = false;
   bool _locating = false;
+  MeasurementFilter _filter = MeasurementFilter.none;
+
+  List<NoiseMeasurement> get _visible => _filter.apply(widget.repository.all);
 
   @override
   void initState() {
@@ -54,7 +59,7 @@ class _MapScreenState extends State<MapScreen> {
 
     await c.addSource(
       MapConstants.measurementsSource,
-      GeojsonSourceProperties(data: _toGeoJson(widget.repository.all)),
+      GeojsonSourceProperties(data: _toGeoJson(_visible)),
     );
 
     // Farbe je Klasse aus dem Theme, damit Karte und Listen übereinstimmen.
@@ -94,7 +99,18 @@ class _MapScreenState extends State<MapScreen> {
     if (c == null || !_styleLoaded) return;
     await c.setGeoJsonSource(
       MapConstants.measurementsSource,
-      _toGeoJson(widget.repository.all),
+      _toGeoJson(_visible),
+    );
+  }
+
+  void _openFilter() {
+    MapFilterSheet.show(
+      context,
+      initial: _filter,
+      onChanged: (f) {
+        setState(() => _filter = f);
+        _pushData();
+      },
     );
   }
 
@@ -192,6 +208,15 @@ class _MapScreenState extends State<MapScreen> {
       appBar: AppBar(
         title: const Text('Karte'),
         actions: [
+          IconButton(
+            tooltip: 'Filter',
+            onPressed: _openFilter,
+            icon: Badge(
+              isLabelVisible: _filter.isActive,
+              label: Text('${_filter.activeCount}'),
+              child: const Icon(Icons.filter_list),
+            ),
+          ),
           if (kDebugMode)
             PopupMenuButton<String>(
               tooltip: 'Debug',
@@ -234,7 +259,9 @@ class _MapScreenState extends State<MapScreen> {
                     child: Padding(
                       padding:
                           const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      child: Text('${widget.repository.all.length} Messungen'),
+                      child: Text(_filter.isActive
+                          ? '${_visible.length} von ${widget.repository.all.length} Messungen'
+                          : '${widget.repository.all.length} Messungen'),
                     ),
                   ),
                   const SizedBox(height: 8),
