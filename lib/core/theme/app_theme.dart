@@ -33,6 +33,10 @@ class AppTheme {
         NoiseCategory.uncertain => Icons.help_outline,
       };
 
+  /// "#rrggbb" für MapLibre-Style-Ausdrücke.
+  static String toHex(Color c) =>
+      '#${(c.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+
   static Color levelColor(NoiseLevelClass l) => switch (l) {
         NoiseLevelClass.quiet => const Color(0xFF3A9D5D),
         NoiseLevelClass.moderate => const Color(0xFFC9B21E),

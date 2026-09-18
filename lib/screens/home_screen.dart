@@ -70,7 +70,10 @@ class HomeScreen extends StatelessWidget {
                 ),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => MapScreen(repository: repository),
+                    builder: (_) => MapScreen(
+                      repository: repository,
+                      locationService: locationService,
+                    ),
                   ),
                 ),
                 icon: const Icon(Icons.map),
