@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
 import 'repositories/measurement_repository.dart';
+import 'services/location_service.dart';
 import 'screens/home_screen.dart';
 
 class NoiseMapsApp extends StatelessWidget {
-  const NoiseMapsApp({super.key, required this.repository});
+  const NoiseMapsApp({
+    super.key,
+    required this.repository,
+    required this.locationService,
+  });
 
   final MeasurementRepository repository;
+  final LocationService locationService;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +21,10 @@ class NoiseMapsApp extends StatelessWidget {
       title: 'NoiseMaps',
       theme: AppTheme.light(),
       darkTheme: AppTheme.dark(),
-      home: HomeScreen(repository: repository),
+      home: HomeScreen(
+        repository: repository,
+        locationService: locationService,
+      ),
     );
   }
 }

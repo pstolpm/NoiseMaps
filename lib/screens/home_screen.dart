@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../repositories/measurement_repository.dart';
+import '../services/location_service.dart';
 import '../widgets/measurement_card.dart';
 import 'map_screen.dart';
 import 'measurement_screen.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, required this.repository});
+  const HomeScreen({
+    super.key,
+    required this.repository,
+    required this.locationService,
+  });
 
   final MeasurementRepository repository;
+  final LocationService locationService;
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +46,10 @@ class HomeScreen extends StatelessWidget {
                 ),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => MeasurementScreen(repository: repository),
+                    builder: (_) => MeasurementScreen(
+                      repository: repository,
+                      locationService: locationService,
+                    ),
                   ),
                 ),
                 icon: const Icon(Icons.mic),

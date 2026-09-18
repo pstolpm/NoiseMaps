@@ -6,6 +6,7 @@ import 'package:noise_maps/models/noise_category.dart';
 import 'package:noise_maps/models/noise_level_class.dart';
 import 'package:noise_maps/models/noise_measurement.dart';
 import 'package:noise_maps/repositories/measurement_repository.dart';
+import 'package:noise_maps/services/location_service.dart';
 
 void main() {
   group('Modelle', () {
@@ -63,9 +64,29 @@ void main() {
     });
   });
 
+  group('LocationService (Fake)', () {
+    test('liefert Fix', () async {
+      final fix = await const FakeLocationService().getCurrentFix();
+      expect(fix.latitude, closeTo(52.52, 0.001));
+      expect(fix.accuracy, 8.0);
+    });
+
+    test('wirft LocationException mit deutscher Meldung', () async {
+      const svc = FakeLocationService(failure: LocationFailure.permissionDenied);
+      expect(
+        () => svc.getCurrentFix(),
+        throwsA(isA<LocationException>()
+            .having((e) => e.message, 'message', contains('verweigert'))),
+      );
+    });
+  });
+
   testWidgets('Home zeigt Titel und Messbutton', (tester) async {
     await tester.pumpWidget(
-      NoiseMapsApp(repository: InMemoryMeasurementRepository()),
+      NoiseMapsApp(
+        repository: InMemoryMeasurementRepository(),
+        locationService: const FakeLocationService(),
+      ),
     );
     expect(find.text('NoiseMaps'), findsOneWidget);
     expect(find.widgetWithText(FilledButton, 'Messung starten'), findsOneWidget);
