@@ -8,6 +8,7 @@ import 'package:noise_maps/models/noise_category.dart';
 import 'package:noise_maps/models/noise_level_class.dart';
 import 'package:noise_maps/models/noise_measurement.dart';
 import 'package:noise_maps/repositories/measurement_repository.dart';
+import 'package:noise_maps/services/ai_classification_service.dart';
 import 'package:noise_maps/services/audio_service.dart';
 import 'package:noise_maps/services/location_service.dart';
 import 'package:noise_maps/services/sound_level_service.dart';
@@ -132,12 +133,23 @@ void main() {
     });
   });
 
+  group('AI (Mock)', () {
+    test('Mock liefert Klasse mit Confidence', () async {
+      final sample = await const FakeAudioService(amplitude: 0.3)
+          .recordSample(duration: const Duration(seconds: 1));
+      final r = await const MockAiClassificationService().classifyAudio(sample);
+      expect(r.confidence, inInclusiveRange(0, 1));
+      expect(r.category, isNot(NoiseCategory.uncertain));
+    });
+  });
+
   testWidgets('Home zeigt Titel und Messbutton', (tester) async {
     await tester.pumpWidget(
       NoiseMapsApp(
         repository: InMemoryMeasurementRepository(),
         locationService: const FakeLocationService(),
         audioService: const FakeAudioService(),
+        aiService: const MockAiClassificationService(),
       ),
     );
     expect(find.text('NoiseMaps'), findsOneWidget);

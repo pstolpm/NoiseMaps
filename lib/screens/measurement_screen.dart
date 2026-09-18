@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 
-import '../models/noise_category.dart';
 import '../models/noise_measurement.dart';
 import '../repositories/measurement_repository.dart';
+import '../services/ai_classification_service.dart';
 import '../services/audio_service.dart';
 import '../services/location_service.dart';
 import '../services/sound_level_service.dart';
@@ -13,21 +12,23 @@ import 'result_screen.dart';
 
 /// Messbildschirm.
 ///
-/// Phase 3: Standort (LocationService) und Audio (AudioService) laufen
-/// parallel; der Pegel kommt aus SoundLevelService. Die AI-Klasse ist
-/// noch simuliert und folgt in Phase 4 über AiClassificationService.
+/// Standort (LocationService) und Audio (AudioService) laufen parallel;
+/// der Pegel kommt aus SoundLevelService, die Geräuschklasse aus
+/// AiClassificationService. Roh-Audio wird nach der Auswertung verworfen.
 class MeasurementScreen extends StatefulWidget {
   const MeasurementScreen({
     super.key,
     required this.repository,
     required this.locationService,
     required this.audioService,
+    required this.aiService,
     this.soundLevelService = const SoundLevelService(),
   });
 
   final MeasurementRepository repository;
   final LocationService locationService;
   final AudioService audioService;
+  final AiClassificationService aiService;
   final SoundLevelService soundLevelService;
 
   static const measurementDuration = Duration(seconds: 4);
@@ -55,6 +56,10 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
   SoundLevelResult? _level;
   AudioException? _audioError;
 
+  _Status _aiStatus = _Status.idle;
+  AiClassification? _ai;
+  String? _aiError;
+
   Future<void> _start() async {
     setState(() {
       _running = true;
@@ -66,17 +71,21 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
       _level = null;
       _liveDbfs = null;
       _audioError = null;
+      _aiStatus = _Status.idle;
+      _ai = null;
+      _aiError = null;
     });
 
     await Future.wait([_fetchLocation(), _recordAudio()]);
     if (!mounted) return;
 
-    if (_fix == null || _level == null) {
-      // Ohne Position oder ohne Audio keine Messung (Project Brain, Abschnitt 9).
+    if (_fix == null || _level == null || _ai == null) {
+      // Ohne Position, Audio oder Klassifikation keine Messung
+      // (Project Brain, Abschnitt 9).
       setState(() => _running = false);
       return;
     }
-    _finish(_fix!, _level!);
+    _finish(_fix!, _level!, _ai!);
   }
 
   Future<void> _fetchLocation() async {
@@ -108,13 +117,15 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         },
       );
       final level = widget.soundLevelService.analyze(sample);
-      // `sample` wird hier verworfen – kein Roh-Audio bleibt erhalten.
       if (!mounted) return;
       setState(() {
         _level = level;
         _micStatus = _Status.ok;
         _progress = 1;
+        _aiStatus = _Status.working;
       });
+      await _classify(sample);
+      // `sample` verlässt hier den Scope – kein Roh-Audio bleibt erhalten.
     } on AudioException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -124,9 +135,24 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     }
   }
 
-  void _finish(LocationFix fix, SoundLevelResult level) {
-    final rnd = Random();
-    final cats = NoiseCategory.values;
+  Future<void> _classify(AudioSample sample) async {
+    try {
+      final result = await widget.aiService.classifyAudio(sample);
+      if (!mounted) return;
+      setState(() {
+        _ai = result;
+        _aiStatus = _Status.ok;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _aiError = 'Klassifikation fehlgeschlagen ($e)';
+        _aiStatus = _Status.error;
+      });
+    }
+  }
+
+  void _finish(LocationFix fix, SoundLevelResult level, AiClassification ai) {
     final flags = <String>[
       if (fix.accuracy > MeasurementScreen.maxGoodAccuracyMeters) 'low_gps_accuracy',
       if (level.isClipping) 'clipping',
@@ -137,8 +163,8 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
       longitude: fix.longitude,
       timestamp: DateTime.now(),
       soundLevel: double.parse(level.indicativeDb.toStringAsFixed(1)),
-      aiCategory: cats[rnd.nextInt(cats.length)], // simuliert (Phase 4)
-      aiConfidence: 0.3 + rnd.nextDouble() * 0.65, // simuliert (Phase 4)
+      aiCategory: ai.category,
+      aiConfidence: double.parse(ai.confidence.toStringAsFixed(3)),
       gpsAccuracy: fix.accuracy,
       durationSeconds: MeasurementScreen.measurementDuration.inSeconds,
       qualityFlag: flags.isEmpty ? 'valid' : flags.join(','),
@@ -171,6 +197,13 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
         _Status.error => 'Fehler',
       };
 
+  String get _aiLabel => switch (_aiStatus) {
+        _Status.idle => widget.aiService.name,
+        _Status.working => 'klassifiziert …',
+        _Status.ok => '${_ai!.category.label} (${(_ai!.confidence * 100).round()} %)',
+        _Status.error => 'Fehler',
+      };
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -179,7 +212,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
     final waitingForGps = _running && audioDone && _locStatus == _Status.working;
     final remaining =
         (MeasurementScreen.measurementDuration.inSeconds * (1 - _progress)).ceil();
-    final hasError = _locError != null || _audioError != null;
+    final hasError = _locError != null || _audioError != null || _aiError != null;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Messung')),
@@ -225,6 +258,12 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                 value: _micLabel,
                 color: _micStatus == _Status.error ? errorColor : null,
               ),
+              _StatusRow(
+                icon: Icons.psychology,
+                label: 'KI',
+                value: _aiLabel,
+                color: _aiStatus == _Status.error ? errorColor : null,
+              ),
               const SizedBox(height: 24),
               if (_locError != null)
                 _ErrorBox(
@@ -237,6 +276,7 @@ class _MeasurementScreenState extends State<MeasurementScreen> {
                     _ => null,
                   },
                 ),
+              if (_aiError != null) _ErrorBox(message: _aiError!),
               if (_audioError != null)
                 _ErrorBox(
                   message: _audioError!.message,

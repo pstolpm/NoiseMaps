@@ -19,6 +19,17 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
+// tflite_flutter setzt in seinem Modul Java 11, aber kein Kotlin-Ziel; mit
+// einem neuen JDK nimmt Kotlin dann dessen Version und Gradle bricht wegen
+// "Inconsistent JVM-target" ab. Wir geben diesem Modul das passende Kotlin-Ziel 11.
+subprojects {
+    if (name == "tflite_flutter") {
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+            compilerOptions.jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_11)
+        }
+    }
+}
+
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
