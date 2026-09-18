@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../repositories/measurement_repository.dart';
@@ -14,7 +15,23 @@ class MapScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Karte (Platzhalter)')),
+      appBar: AppBar(
+        title: const Text('Karte (Platzhalter)'),
+        actions: [
+          if (kDebugMode)
+            PopupMenuButton<String>(
+              tooltip: 'Debug',
+              onSelected: (v) async {
+                if (v == 'sample') await repository.addSampleData();
+                if (v == 'clear') await repository.clear();
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'sample', child: Text('Beispieldaten laden')),
+                PopupMenuItem(value: 'clear', child: Text('Alle Messungen löschen')),
+              ],
+            ),
+        ],
+      ),
       body: ListenableBuilder(
         listenable: repository,
         builder: (context, _) {

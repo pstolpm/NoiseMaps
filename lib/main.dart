@@ -9,9 +9,8 @@ import 'services/location_service.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Phase 1: flüchtiges Repository mit Dummy-Daten.
-  // Wird in Phase 5 durch eine lokale Datenbank ersetzt.
-  final repository = InMemoryMeasurementRepository();
+  // Lokale SQLite-Datenbank; Messungen überleben App-Neustarts.
+  final repository = await SqliteMeasurementRepository.open();
   const locationService = GeolocatorLocationService();
   final audioService = RecordAudioService();
 
