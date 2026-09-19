@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> or <div class="page"></div> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="noisemaps">NoiseMaps</h1>
+<p>Mobile GeoIT-App zur crowd-basierten, <strong>indikativen</strong> Erfassung und Visualisierung urbaner Lärmbelastung.</p>
+<p>Studienprojekt im Master Geoinformation, BHT Berlin – Kurs GeoIT / Automatisierte Geodatenprozessierung (Prof. Wagner).</p>
+<p><strong>Name:</strong> Paul Timon Stolpmann
+<strong>Matrikelnummer:</strong> 110129</p>
+<p><strong>Quellcode:</strong> https://github.com/pstolpm/NoiseMaps
+<strong>Ausführbarer Code (Release-APK):</strong> https://github.com/pstolpm/NoiseMaps/releases/download/v1.0/app-release.apk (Installationsanleitung siehe <a href="INSTALLATION.md">INSTALLATION.md</a>)</p>
+<blockquote>
+<p>Nur die fertige App ausprobieren, ohne Entwicklungsumgebung? Siehe <a href="INSTALLATION.md">INSTALLATION.md</a>.
+Kurzer technischer Überblick (Architektur, Datenfluss, KI-Modell)? Siehe <a href="TECHNICAL_OVERVIEW.md">TECHNICAL_OVERVIEW.md</a>.</p>
+</blockquote>
+<h2 id="was-die-app-tut">Was die App tut</h2>
+<ol>
+<li>nimmt für wenige Sekunden Audio über das Smartphone-Mikrofon auf,</li>
+<li>berechnet daraus einen indikativen Geräuschpegel,</li>
+<li>klassifiziert die Geräuschquelle mit einem lokalen KI-Modell (Verkehr, Baustelle/Maschinen, Menschen, Natur, unsicher),</li>
+<li>verortet die Messung per GPS,</li>
+<li>speichert Messung und KI-Ergebnis lokal auf dem Gerät,</li>
+<li>zeigt Messpunkte auf einer MapLibre-Karte (Punkte oder Heatmap, filterbar),</li>
+<li>erlaubt den Export von Messungen als GeoJSON/CSV/PNG sowie den Import fremder GeoJSON-Dateien als offline-basierte Crowd-Daten.</li>
+</ol>
+<p><strong>Wichtiger Hinweis:</strong> NoiseMaps ist <strong>keine amtliche Schallpegelmessung</strong>. Smartphone-Mikrofone sind nicht kalibriert; alle Pegelwerte sind indikativ. Roh-Audio wird nach der Auswertung verworfen und nicht gespeichert.</p>
+<h2 id="funktionsumfang">Funktionsumfang</h2>
+<ul>
+<li><strong>Messung</strong>: Mikrofon- und Standortberechtigung, 3–5 Sekunden Aufnahme, Live-Pegelanzeige</li>
+<li><strong>KI-Klassifikation</strong>: YAMNet (TensorFlow Lite, on-device), Mapping auf 5 Zielklassen, Confidence-Anzeige, bei niedriger Confidence automatisch „unsicher&quot;, Nutzerkorrektur möglich, Detailansicht der KI-Rohklassen</li>
+<li><strong>Persistenz</strong>: lokale SQLite-Datenbank, Messungen bleiben über Neustarts erhalten</li>
+<li><strong>Karte</strong>: MapLibre GL, Messpunkte oder Heatmap, Legende, Filter (Kategorie, Pegelklasse, Zeitraum), Zoom-Buttons, „zu meinem Standort&quot;</li>
+<li><strong>Statistik</strong>: Kennzahlen, Verteilung nach Kategorie/Pegel, Tagesverlauf</li>
+<li><strong>Export/Import</strong>: GeoJSON, CSV und PNG-Export über den nativen Teilen-Dialog; GeoJSON-Import zur offline-Zusammenführung von Messungen mehrerer Geräte (Crowd-Daten), inkl. Duplikaterkennung und visueller Kennzeichnung importierter Punkte</li>
+<li><strong>Design</strong>: eigenes petrolfarbenes Theme, Inter-Schriftart, eigenes App-Icon</li>
+<li><strong>Info/FAQ/Datenschutz</strong>: eigener Infobereich in der App</li>
+</ul>
+<p>Der komplette Funktionsumfang der „Definition of Done&quot; (siehe Projektunterlagen) ist umgesetzt und auf einem Android-Emulator getestet, inklusive Installation der Release-APK auf einem zweiten Gerät.</p>
+<h2 id="entwicklung">Entwicklung</h2>
+<p>Voraussetzungen: Flutter (stable), Android SDK inkl. NDK 28.2.13676358, ein Android-Emulator oder physisches Gerät (min. Android 8.0 / API 26).</p>
+<p>Das KI-Modell <code>yamnet.tflite</code> muss vor dem ersten Build unter <code>assets/models/yamnet.tflite</code> liegen (siehe <a href="TECHNICAL_OVERVIEW.md">TECHNICAL_OVERVIEW.md</a> für die Quelle).</p>
+<pre class="hljs"><code><div>flutter pub get
+flutter run
+</div></code></pre>
+<p>Tests:</p>
+<pre class="hljs"><code><div>flutter analyze
+flutter <span class="hljs-built_in">test</span>
+</div></code></pre>
+<p>Release-APK bauen:</p>
+<pre class="hljs"><code><div>flutter build apk --release
+</div></code></pre>
+<p>Ergebnis: <code>build/app/outputs/flutter-apk/app-release.apk</code></p>
+<h2 id="projektstruktur">Projektstruktur</h2>
+<pre class="hljs"><code><div>lib/
+  core/           Konstanten, Theme, Utilities
+  models/         Datenmodelle (NoiseMeasurement, NoiseCategory, Filter, Statistik)
+  services/       LocationService, AudioService, SoundLevelService,
+                   AiClassificationService, ExportService – jeweils als
+                   austauschbares Interface mit echter und Fake/Mock-Implementierung
+  repositories/    MeasurementRepository (SQLite- und In-Memory-Implementierung)
+  screens/        Home, Messung, Ergebnis, Karte, Statistik, Info/FAQ
+  widgets/        wiederverwendbare UI-Bausteine
+assets/
+  models/         yamnet.tflite (KI-Modell, siehe TECHNICAL_OVERVIEW.md)
+  labels/         Klassen-Mapping YAMNet -&gt; Zielkategorien
+  fonts/          Inter (SIL OFL 1.1)
+  icon/           App-Icon-Quelldateien
+test/             Unit- und Widget-Tests
+</div></code></pre>
+<p>Die zentrale Architekturentscheidung: Alle Kernfunktionen (Standort, Audio, KI, Speicherung) laufen hinter abstrakten Service-Interfaces. Dadurch lässt sich z. B. die KI-Komponente unabhängig von der restlichen App austauschen oder testen (Mock-Implementierungen werden in den Tests verwendet).</p>
+<h2 id="datenschutz">Datenschutz</h2>
+<ul>
+<li>kein dauerhaftes Speichern von Roh-Audio</li>
+<li>KI-Inferenz läuft vollständig lokal auf dem Gerät</li>
+<li>keine Nutzerkonten, keine Geräte-ID, keine personenbezogenen Bewegungsprofile</li>
+<li>Crowd-Daten werden ausschließlich über manuellen, lokalen Dateiaustausch (GeoJSON-Export/Import) zusammengeführt, nicht über einen Server</li>
+<li>Datenschutzhinweise sind direkt in der App abrufbar (Info-Bereich)</li>
+</ul>
+<h2 id="screenshots">Screenshots</h2>
+<table>
+<thead>
+<tr>
+<th>Home</th>
+<th>Messung / Ergebnis (Statistik)</th>
+<th>Karte (Punkte)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="docs/screenshots/home.png" alt="Home"></td>
+<td><img src="docs/screenshots/statistik.png" alt="Statistik"></td>
+<td><img src="docs/screenshots/karte-punkte.png" alt="Karte mit Messpunkten"></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>Karte (Heatmap + Filter)</th>
+<th>Info / FAQ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><img src="docs/screenshots/karte-heatmap-filter.png" alt="Karte Heatmap und Filter"></td>
+<td><img src="docs/screenshots/info.png" alt="Info-Bereich"></td>
+</tr>
+</tbody>
+</table>
+<h2 id="lizenzen--quellen">Lizenzen &amp; Quellen</h2>
+<ul>
+<li><strong>KI-Modell</strong>: <a href="https://www.kaggle.com/models/google/yamnet">YAMNet</a> (Audioklassifikation, TensorFlow Lite), Teil von <a href="https://github.com/tensorflow/models">tensorflow/models</a>, lizenziert unter der <a href="https://github.com/tensorflow/models/blob/master/LICENSE">Apache License 2.0</a></li>
+<li><strong>Kartenstil/Tiles</strong>: <a href="https://openfreemap.org">OpenFreeMap</a> („Liberty&quot;-Stil), Kartendaten: <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap-Mitwirkende</a>, lizenziert unter der <a href="https://opendatacommons.org/licenses/odbl/">Open Database License (ODbL)</a></li>
+<li><strong>Kartenbibliothek</strong>: <a href="https://maplibre.org/">MapLibre GL</a></li>
+<li><strong>Schriftart</strong>: <a href="https://rsms.me/inter/">Inter</a>, lizenziert unter der <a href="https://rsms.me/inter/">SIL Open Font License 1.1</a> (siehe <code>assets/fonts/LICENSE-Inter-OFL.txt</code>)</li>
+<li>Alle weiteren verwendeten Flutter-Pakete und ihre jeweiligen Lizenzen sind in <code>pubspec.yaml</code> bzw. auf <a href="https://pub.dev">pub.dev</a> einsehbar.</li>
+</ul>
+
+</body>
+</html>

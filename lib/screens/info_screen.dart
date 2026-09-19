@@ -67,7 +67,7 @@ class _AboutTab extends StatelessWidget {
         Text('Projekt', style: theme.textTheme.titleSmall),
         const SizedBox(height: 8),
         const Text('Studienprojekt im Master Geoinformation, Berliner Hochschule für Technik (BHT), '
-            'Kurs GeoIT / AI-gestützte Automatisierung.'),
+            'Kurs Automatisierte Geodatenprozessierung.'),
       ],
     );
   }
