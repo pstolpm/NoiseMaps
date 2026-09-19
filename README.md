@@ -2,7 +2,7 @@
 
 Mobile GeoIT-App zur crowd-basierten, **indikativen** Erfassung und Visualisierung urbaner Lärmbelastung.
 
-Studienprojekt im Master Geoinformation, BHT Berlin – Kurs GeoIT / AI-gestützte Automatisierung (Prof. Wagner).
+Studienprojekt im Master Geoinformation, BHT Berlin – Kurs GeoIT / Automatisierte Geodatenprozessierung (Prof. Wagner).
 
 ## Was die App tut
 
