@@ -16,6 +16,20 @@ abstract class MeasurementRepository extends ChangeNotifier {
 
   Future<void> clear();
 
+  /// Fügt importierte Messungen hinzu, ohne vorhandene (auch eigene) zu
+  /// überschreiben. Gibt die Anzahl tatsächlich hinzugefügter Messungen zurück.
+  Future<int> importMeasurements(Iterable<NoiseMeasurement> items) async {
+    final existing = all.map((m) => m.id).toSet();
+    var added = 0;
+    for (final m in items) {
+      if (existing.contains(m.id)) continue;
+      await add(m);
+      existing.add(m.id);
+      added++;
+    }
+    return added;
+  }
+
   NoiseMeasurement? get latest => all.isEmpty
       ? null
       : all.reduce((a, b) => a.timestamp.isAfter(b.timestamp) ? a : b);
@@ -120,7 +134,8 @@ class SqliteMeasurementRepository extends MeasurementRepository {
           device_model TEXT,
           osm_road_class TEXT,
           duration_seconds INTEGER,
-          quality_flag TEXT NOT NULL DEFAULT 'valid'
+          quality_flag TEXT NOT NULL DEFAULT 'valid',
+          origin TEXT
         )
       '''),
     );
@@ -173,6 +188,7 @@ class SqliteMeasurementRepository extends MeasurementRepository {
         'osm_road_class': m.osmRoadClass,
         'duration_seconds': m.durationSeconds,
         'quality_flag': m.qualityFlag,
+        'origin': m.origin,
       };
 
   static NoiseMeasurement _fromRow(Map<String, Object?> r) => NoiseMeasurement(
@@ -192,5 +208,6 @@ class SqliteMeasurementRepository extends MeasurementRepository {
         osmRoadClass: r['osm_road_class'] as String?,
         durationSeconds: r['duration_seconds'] as int?,
         qualityFlag: r['quality_flag'] as String? ?? 'valid',
+        origin: r['origin'] as String?,
       );
 }

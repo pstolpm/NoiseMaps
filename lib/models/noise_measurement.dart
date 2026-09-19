@@ -21,6 +21,7 @@ class NoiseMeasurement {
     this.osmRoadClass,
     this.durationSeconds,
     this.qualityFlag = 'valid',
+    this.origin,
   });
 
   final String id;
@@ -44,6 +45,13 @@ class NoiseMeasurement {
   final int? durationSeconds;
   final String qualityFlag;
 
+  /// null = eigene Messung dieses Geräts. Sonst eine kurze Herkunftsangabe,
+  /// z. B. "Import: kommilitone.geojson" (lokal importierte Crowd-Daten,
+  /// siehe Karte -> Importieren). Keine Nutzer-ID, keine Geräte-ID.
+  final String? origin;
+
+  bool get isImported => origin != null;
+
   /// Nutzerkorrektur hat Vorrang vor der AI-Klasse.
   NoiseCategory get effectiveCategory => userCategory ?? aiCategory;
 
@@ -54,6 +62,7 @@ class NoiseMeasurement {
     bool? isUserCorrected,
     String? osmRoadClass,
     String? qualityFlag,
+    String? origin,
   }) {
     return NoiseMeasurement(
       id: id,
@@ -70,6 +79,7 @@ class NoiseMeasurement {
       osmRoadClass: osmRoadClass ?? this.osmRoadClass,
       durationSeconds: durationSeconds,
       qualityFlag: qualityFlag ?? this.qualityFlag,
+      origin: origin ?? this.origin,
     );
   }
 
@@ -88,6 +98,7 @@ class NoiseMeasurement {
         'osmRoadClass': osmRoadClass,
         'durationSeconds': durationSeconds,
         'qualityFlag': qualityFlag,
+        'origin': origin,
       };
 
   factory NoiseMeasurement.fromJson(Map<String, dynamic> json) {
@@ -108,6 +119,7 @@ class NoiseMeasurement {
       osmRoadClass: json['osmRoadClass'] as String?,
       durationSeconds: json['durationSeconds'] as int?,
       qualityFlag: json['qualityFlag'] as String? ?? 'valid',
+      origin: json['origin'] as String?,
     );
   }
 }

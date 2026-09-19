@@ -177,6 +177,66 @@ void main() {
     });
   });
 
+  group('GeoJSON-Import', () {
+    test('Roundtrip: Export -> Parse liefert gleiche Kernwerte, origin gesetzt', () {
+      const svc = ExportService();
+      final items = MeasurementRepository.sampleMeasurements();
+      final geojson = svc.toGeoJson(items);
+      final parsed = svc.parseGeoJson(geojson, sourceLabel: 'test.geojson');
+      expect(parsed.length, items.length);
+      expect(parsed.every((m) => m.isImported), isTrue);
+      expect(parsed.first.origin, 'Import: test.geojson');
+      final orig = items.firstWhere((m) => m.id == parsed.first.id);
+      expect(parsed.first.latitude, orig.latitude);
+      expect(parsed.first.longitude, orig.longitude);
+      expect(parsed.first.soundLevel, orig.soundLevel);
+    });
+
+    test('ungültiges JSON wirft FormatException', () {
+      const svc = ExportService();
+      expect(() => svc.parseGeoJson('{"type":"Nope"}', sourceLabel: 'x'),
+          throwsFormatException);
+    });
+
+    test('importMeasurements überschreibt vorhandene ids nicht', () async {
+      final repo = InMemoryMeasurementRepository(seed: false);
+      final own = NoiseMeasurement(
+        id: 'shared-id',
+        latitude: 1,
+        longitude: 1,
+        timestamp: DateTime.now(),
+        soundLevel: 99,
+        aiCategory: NoiseCategory.traffic,
+        aiConfidence: 0.9,
+      );
+      await repo.add(own);
+      final imported = NoiseMeasurement(
+        id: 'shared-id', // Kollision -> darf nicht überschreiben
+        latitude: 2,
+        longitude: 2,
+        timestamp: DateTime.now(),
+        soundLevel: 1,
+        aiCategory: NoiseCategory.nature,
+        aiConfidence: 0.1,
+        origin: 'Import: x.geojson',
+      );
+      final other = NoiseMeasurement(
+        id: 'new-id',
+        latitude: 3,
+        longitude: 3,
+        timestamp: DateTime.now(),
+        soundLevel: 50,
+        aiCategory: NoiseCategory.people,
+        aiConfidence: 0.5,
+        origin: 'Import: x.geojson',
+      );
+      final added = await repo.importMeasurements([imported, other]);
+      expect(added, 1);
+      expect(repo.all.firstWhere((m) => m.id == 'shared-id').soundLevel, 99);
+      expect(repo.all.any((m) => m.id == 'new-id'), isTrue);
+    });
+  });
+
   group('ExportService', () {
     final items = MeasurementRepository.sampleMeasurements();
     const svc = ExportService();

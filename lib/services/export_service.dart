@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:share_plus/share_plus.dart';
 
+import '../models/noise_category.dart';
 import '../models/noise_measurement.dart';
 
 /// Export der Messungen als GeoJSON / CSV sowie Teilen über den System-Dialog.
@@ -61,6 +62,53 @@ class ExportService {
       ].join(','));
     }
     return sb.toString();
+  }
+
+  /// Parst eine GeoJSON-FeatureCollection (eigenes Export-Format oder
+  /// kompatibel: Point-Geometrie + Properties mit den Feldern aus toJson).
+  /// Wirft [FormatException] bei ungültigem Inhalt. Fehlerhafte einzelne
+  /// Features werden übersprungen, nicht der ganze Import verworfen.
+  List<NoiseMeasurement> parseGeoJson(String content, {required String sourceLabel}) {
+    final data = json.decode(content);
+    if (data is! Map || data['type'] != 'FeatureCollection') {
+      throw const FormatException('Keine gültige GeoJSON-FeatureCollection.');
+    }
+    final features = data['features'];
+    if (features is! List) throw const FormatException('Keine "features"-Liste gefunden.');
+
+    final result = <NoiseMeasurement>[];
+    for (final f in features) {
+      try {
+        if (f is! Map) continue;
+        final geom = f['geometry'] as Map?;
+        if (geom == null || geom['type'] != 'Point') continue;
+        final coords = (geom['coordinates'] as List).cast<num>();
+        final props = Map<String, dynamic>.from(f['properties'] as Map? ?? {});
+        final id = (props['id'] ?? f['id'])?.toString();
+        if (id == null || props['timestamp'] == null) continue;
+
+        result.add(NoiseMeasurement(
+          id: id,
+          longitude: coords[0].toDouble(),
+          latitude: coords[1].toDouble(),
+          timestamp: DateTime.parse(props['timestamp'] as String),
+          soundLevel: (props['soundLevel'] as num?)?.toDouble() ?? 0,
+          aiCategory: NoiseCategory.fromKey(props['aiCategory'] as String?),
+          aiConfidence: (props['aiConfidence'] as num?)?.toDouble() ?? 0,
+          gpsAccuracy: (props['gpsAccuracy'] as num?)?.toDouble(),
+          userCategory: props['userCategory'] == null
+              ? null
+              : NoiseCategory.fromKey(props['userCategory'] as String?),
+          isUserCorrected: props['isUserCorrected'] as bool? ?? false,
+          durationSeconds: (props['durationSeconds'] as num?)?.toInt(),
+          qualityFlag: props['qualityFlag'] as String? ?? 'valid',
+          origin: 'Import: $sourceLabel',
+        ));
+      } catch (_) {
+        continue; // einzelnes fehlerhaftes Feature überspringen
+      }
+    }
+    return result;
   }
 
   static String _csvEscape(String v) =>

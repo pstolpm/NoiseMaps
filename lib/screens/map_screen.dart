@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'dart:math' show Point;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 import '../core/constants/map_constants.dart';
@@ -116,8 +118,18 @@ class _MapScreenState extends State<MapScreen> {
           90, 12,
         ],
         circleOpacity: 0.85,
-        circleStrokeColor: '#ffffff',
-        circleStrokeWidth: 1.5,
+        circleStrokeColor: <dynamic>[
+          'case',
+          <dynamic>['==', <dynamic>['get', 'imported'], true],
+          '#2b2b2b',
+          '#ffffff',
+        ],
+        circleStrokeWidth: <dynamic>[
+          'case',
+          <dynamic>['==', <dynamic>['get', 'imported'], true],
+          2.5,
+          1.5,
+        ],
       ),
     );
 
@@ -219,6 +231,7 @@ class _MapScreenState extends State<MapScreen> {
                 'id': m.id,
                 'category': m.effectiveCategory.key,
                 'soundLevel': m.soundLevel,
+                'imported': m.isImported,
               },
             },
         ],
@@ -248,6 +261,12 @@ class _MapScreenState extends State<MapScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             MeasurementCard(measurement: m),
+            if (m.isImported)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, left: 8),
+                child: Text('Herkunft: ${m.origin}',
+                    style: Theme.of(ctx).textTheme.bodySmall),
+              ),
             if (m.qualityFlag != 'valid')
               Padding(
                 padding: const EdgeInsets.only(top: 4, left: 8),
@@ -267,6 +286,44 @@ class _MapScreenState extends State<MapScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _importGeoJson() async {
+    List<PlatformFile> picked;
+    try {
+      picked = await FilePicker.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['geojson', 'json'],
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Dateiauswahl fehlgeschlagen: $e')));
+      }
+      return;
+    }
+    if (picked.isEmpty) return;
+    final file = picked.single;
+
+    String content;
+    try {
+      content = utf8.decode(await file.readAsBytes());
+      final items = _export.parseGeoJson(content, sourceLabel: file.name);
+      final added = await widget.repository.importMeasurements(items);
+      if (mounted) {
+        final skipped = items.length - added;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+          added == 0
+              ? 'Keine neuen Messungen gefunden (bereits vorhanden oder leer).'
+              : '$added Messung(en) importiert${skipped > 0 ? ', $skipped übersprungen (bereits vorhanden)' : ''}.',
+        )));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Import fehlgeschlagen: $e')));
+      }
+    }
   }
 
   Future<void> _goToMyLocation() async {
@@ -306,7 +363,7 @@ class _MapScreenState extends State<MapScreen> {
           PopupMenuButton<String>(
             tooltip: 'Exportieren',
             icon: const Icon(Icons.ios_share),
-            onSelected: _onExport,
+            onSelected: (v) => v == 'import' ? _importGeoJson() : _onExport(v),
             itemBuilder: (_) => [
               PopupMenuItem(
                 value: 'geojson',
@@ -317,6 +374,11 @@ class _MapScreenState extends State<MapScreen> {
                 child: Text('CSV (${_visible.length} Messungen)'),
               ),
               const PopupMenuItem(value: 'png', child: Text('Karte als Bild')),
+              const PopupMenuDivider(),
+              const PopupMenuItem(
+                value: 'import',
+                child: Text('GeoJSON importieren (Crowd)'),
+              ),
             ],
           ),
           IconButton(
@@ -359,7 +421,16 @@ class _MapScreenState extends State<MapScreen> {
           Positioned(
             top: 12,
             left: 12,
-            child: _heatmap ? const _HeatmapLegend() : const NoiseLegend(),
+            child: _heatmap
+                ? const _HeatmapLegend()
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const NoiseLegend(),
+                      if (widget.repository.all.any((m) => m.isImported))
+                        const _LegendImportNote(),
+                    ],
+                  ),
           ),
           Positioned(
             right: 12,
@@ -459,6 +530,34 @@ class _HeatmapLegend extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _LegendImportNote extends StatelessWidget {
+  const _LegendImportNote();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey.shade400,
+              border: Border.all(color: const Color(0xFF2B2B2B), width: 2),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text('dunkler Rand = importiert', style: theme.textTheme.labelSmall),
+        ],
       ),
     );
   }
